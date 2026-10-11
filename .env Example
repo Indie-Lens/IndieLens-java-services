@@ -1,0 +1,13 @@
+# Leitura Apache POI
+CSV_PATH="caminho onde o CSV se encontra"
+XLSX_PATH="caminho onde o arquivo XLSX será criado"
+
+# Banco de dados
+DB_HOST="IP do banco de dados"
+DB_PORT="Porta do banco de dados"
+DB_NAME="Nome do banco de dados"
+DB_USER="Usuario com acesso ao banco de dados"
+DB_SENHA="Senha do banco de dados"
+
+# Bucket S3
+AWS_REGION="INSIRA-REGIAO-AWS-S3"
