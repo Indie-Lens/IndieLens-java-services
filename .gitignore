@@ -7,3 +7,4 @@ src/main/java/com/indielens/s3
 /target/*
 .env
 *.class
+/target/
