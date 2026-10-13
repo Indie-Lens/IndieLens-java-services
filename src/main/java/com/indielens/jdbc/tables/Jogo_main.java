@@ -1,4 +1,4 @@
-package com.indielens.jdbc.objects;
+package com.indielens.jdbc.tables;
 
 import java.time.LocalDate;
 
