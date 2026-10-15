@@ -4,18 +4,18 @@ public class Jogo_suporte {
 
 	private Integer idJogo;
 	private Integer idRegistro;
+	private Boolean suporteWindows;
 	private Boolean suporteMAC;
-	private Boolean suporteLinux; 
-	private Boolean suporteWindows; 
+	private Boolean suporteLinux;
 	private String idiomasSuportados;
 	private String idiomasSuportadosAudio;
 	
-	public Jogo_suporte(Integer idJogo, Integer idRegistro, Boolean suporteMAC, Boolean suporteLinux,Boolean suporteWindows, String idiomasSuportados, String idiomasSuportadosAudio) {
+	public Jogo_suporte(Integer idJogo, Integer idRegistro, Boolean suporteWindows, Boolean suporteMAC, Boolean suporteLinux, String idiomasSuportados, String idiomasSuportadosAudio) {
 		this.idJogo = idJogo;
 		this.idRegistro = idRegistro;
+		this.suporteWindows = suporteWindows;
 		this.suporteMAC = suporteMAC;
 		this.suporteLinux = suporteLinux;
-		this.suporteWindows = suporteWindows;
 		this.idiomasSuportados = idiomasSuportados;
 		this.idiomasSuportadosAudio = idiomasSuportadosAudio;
 	}

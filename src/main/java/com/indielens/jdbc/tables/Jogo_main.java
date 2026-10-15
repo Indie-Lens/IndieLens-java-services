@@ -3,7 +3,7 @@ package com.indielens.jdbc.tables;
 import java.time.LocalDate;
 
 public class Jogo_main {
-	private Integer idJogoRastreavel;
+	private String idJogoRastreavel;
 	private Integer idJogo;
 	private Integer idRegistro;
 	private String nome;
@@ -13,7 +13,7 @@ public class Jogo_main {
 	private Integer idadeMinima;
 	private String desenvolvedor;
 	
-	public Jogo_main(Integer idJogoRastreavel, Integer idJogo, Integer idRegistro, String nome, LocalDate dataLancamento, Double preco, Integer proprietariosEstimados, Integer idadeMinima, String desenvolvedor) {
+	public Jogo_main(String idJogoRastreavel, Integer idJogo, Integer idRegistro, String nome, String desenvolvedor, Integer idadeMinima, Integer proprietariosEstimados, Double preco, LocalDate dataLancamento) {
 		this.idJogoRastreavel = idJogoRastreavel;
 		this.idJogo = idJogo;
 		this.idRegistro = idRegistro;
@@ -28,7 +28,7 @@ public class Jogo_main {
 	public Integer getIdJogo() { return idJogo; }
 	public Integer getIdRegistro() { return idRegistro; }
 	public Integer getIdadeMinima() { return idadeMinima; }
-	public Integer getIdJogoRastreavel() { return idJogoRastreavel; }
+	public String getIdJogoRastreavel() { return idJogoRastreavel; }
 	public Integer getProprietariosEstimados() { return proprietariosEstimados; }
 	
 	public Double getPreco() { return preco; }
@@ -43,7 +43,7 @@ public class Jogo_main {
 	public void setIdadeMinima(Integer idadeMinima) { this.idadeMinima = idadeMinima; }
 	public void setDesenvolvedor(String desenvolvedor) { this.desenvolvedor = desenvolvedor; }
 	public void setDataLancamento(LocalDate dataLancamento) { this.dataLancamento = dataLancamento; }
-	public void setIdJogoRastreavel(Integer idJogoRastreavel) { this.idJogoRastreavel = idJogoRastreavel; }
+	public void setIdJogoRastreavel(String idJogoRastreavel) { this.idJogoRastreavel = idJogoRastreavel; }
 	public void setProprietariosEstimados(Integer proprietariosEstimados) { this.proprietariosEstimados = proprietariosEstimados; }
 
 }

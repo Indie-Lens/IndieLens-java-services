@@ -1,19 +1,17 @@
 package com.indielens.jdbc.tables;
 
-import java.util.List;
-
 public class Jogo {
 	
-	private List<Jogo_main> main;
-	private List<Jogo_midia> midia;
-	private List<Jogo_suporte> suporte;
-	private List<Jogo_detalhes> detalhes;
-	private List<Jogo_metricas> metricas;
-	private List<Jogo_playtime> playtime;
-	private List<Jogo_Auxiliar> auxiliar;
+	private Jogo_main main;
+	private Jogo_midia midia;
+	private Jogo_suporte suporte;
+	private Jogo_detalhes detalhes;
+	private Jogo_metricas metricas;
+	private Jogo_playtime playtime;
+	private Jogo_auxiliar auxiliar;
 	
-	public Jogo(List<Jogo_main> main, List<Jogo_midia> midia, List<Jogo_suporte> suporte, List<Jogo_detalhes> detalhes,
-			List<Jogo_metricas> metricas, List<Jogo_playtime> playtime, List<Jogo_Auxiliar> auxiliar) {
+	public Jogo(Jogo_main main, Jogo_midia midia, Jogo_suporte suporte, Jogo_detalhes detalhes,
+			Jogo_metricas metricas, Jogo_playtime playtime, Jogo_auxiliar auxiliar) {
 		this.main = main;
 		this.midia = midia;
 		this.suporte = suporte;
@@ -23,20 +21,20 @@ public class Jogo {
 		this.auxiliar = auxiliar;
 	}
 	
-	public List<Jogo_main> getMain() { return main; }
-	public List<Jogo_midia> getMidia() { return midia; }
-	public List<Jogo_suporte> getSuporte() { return suporte; }
-	public List<Jogo_detalhes> getDetalhes() { return detalhes; }
-	public List<Jogo_metricas> getMetricas() { return metricas; }
-	public List<Jogo_playtime> getPlaytime() { return playtime; }
-	public List<Jogo_Auxiliar> getAuxiliar() { return auxiliar; }
+	public Jogo_main getMain() { return main; }
+	public Jogo_midia getMidia() { return midia; }
+	public Jogo_suporte getSuporte() { return suporte; }
+	public Jogo_detalhes getDetalhes() { return detalhes; }
+	public Jogo_metricas getMetricas() { return metricas; }
+	public Jogo_playtime getPlaytime() { return playtime; }
+	public Jogo_auxiliar getAuxiliar() { return auxiliar; }
 
-	public void setMain(List<Jogo_main> main) { this.main = main; }
-	public void setMidia(List<Jogo_midia> midia) { this.midia = midia; }
-	public void setSuporte(List<Jogo_suporte> suporte) { this.suporte = suporte; }
-	public void setDetalhes(List<Jogo_detalhes> detalhes) { this.detalhes = detalhes; }
-	public void setMetricas(List<Jogo_metricas> metricas) { this.metricas = metricas; }
-	public void setPlaytime(List<Jogo_playtime> playtime) { this.playtime = playtime; }
-	public void setAuxiliar(List<Jogo_Auxiliar> auxiliar) { this.auxiliar = auxiliar; }
+	public void setMain(Jogo_main main) { this.main = main; }
+	public void setMidia(Jogo_midia midia) { this.midia = midia; }
+	public void setSuporte(Jogo_suporte suporte) { this.suporte = suporte; }
+	public void setDetalhes(Jogo_detalhes detalhes) { this.detalhes = detalhes; }
+	public void setMetricas(Jogo_metricas metricas) { this.metricas = metricas; }
+	public void setPlaytime(Jogo_playtime playtime) { this.playtime = playtime; }
+	public void setAuxiliar(Jogo_auxiliar auxiliar) { this.auxiliar = auxiliar; }
 
 }
