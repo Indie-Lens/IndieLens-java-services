@@ -1,6 +1,6 @@
 package com.indielens.jdbc.tables;
 
-public class Jogo_Auxiliar {
+public class Jogo_auxiliar {
 
 	private Integer idJogo;
 	private Integer idRegistro;
@@ -11,7 +11,7 @@ public class Jogo_Auxiliar {
 	private String urlMetacritic;
 	private String usuarioReview;
 	
-	public Jogo_Auxiliar(Integer idJogo, Integer idRegistro, Integer descontoPct, String siteOficial,String emailSuporte, String urlMetacritic, String urlSuporte, String usuarioReview) {
+	public Jogo_auxiliar(Integer idJogo, Integer idRegistro, Integer descontoPct, String siteOficial,String emailSuporte, String urlMetacritic, String urlSuporte, String usuarioReview) {
 		this.idJogo = idJogo;
 		this.idRegistro = idRegistro;
 		this.descontoPct = descontoPct;
