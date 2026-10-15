@@ -1,10 +1,9 @@
-src/main/java/com/indielens/excelConverter
 src/main/java/com/indielens/logMachine
 src/main/java/com/indielens/s3
 
 /.settings
 
-/target/*
 .env
 *.class
 /target/
+/resources/
