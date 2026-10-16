@@ -1,8 +1,7 @@
 package com.indielens.excelConverter;
 
-import java.io.FileInputStream;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -11,9 +10,12 @@ import java.util.Locale;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 
+import com.github.pjfanning.xlsx.SharedStringsImplementationType;
+import com.github.pjfanning.xlsx.StreamingReader;
+import com.indielens.jdbc.methods.JogosExtractor;
 import com.indielens.jdbc.tables.Jogo;
 import com.indielens.jdbc.tables.Jogo_auxiliar;
 import com.indielens.jdbc.tables.Jogo_detalhes;
@@ -37,12 +39,18 @@ public class Reader {
         String caminho = caminhoDoArquivo == null || caminhoDoArquivo.trim().isEmpty()
             ? nomeArquivo : caminhoDoArquivo;
         try (
-            InputStream arquivo = new FileInputStream(caminho);
-            XSSFWorkbook workbook = new XSSFWorkbook(arquivo) 
+            // Mantem somente 100 linhas em memoria e usa disco para os textos compartilhados.
+            Workbook workbook = StreamingReader.builder()
+                .rowCacheSize(100)
+                .setSharedStringsImplementationType(SharedStringsImplementationType.TEMP_FILE_BACKED)
+                .open(new File(caminho))
         ) {
-            XSSFSheet aba = workbook.getSheetAt(0);
+            Sheet aba = workbook.getSheetAt(0);
 
             int id_registro = lerRegistoAtual.getRegistro() + 1;
+            int totalInseridos = 0;
+
+            System.out.println("Importacao com id_registro = " + id_registro);
             
             for (Row linha : aba) {
             	
@@ -120,9 +128,29 @@ public class Reader {
                 listaJogos.add(jogoAtual);
                 
                 if (listaJogos.size() == 100) {
-					
-				}
+                    if (JogosExtractor.InserirBanco(listaJogos)) {
+                        totalInseridos += listaJogos.size();
+                        listaJogos.clear();
+                        System.out.println("Commit concluido. Jogos inseridos: " + totalInseridos);
+                    } else {
+                        System.out.println("Leitura interrompida: o lote nao foi salvo. A lista foi mantida.");
+                        return;
+                    }
+                }
             }
+
+            // Grava os jogos restantes quando o arquivo termina antes de ter 100 ultimos fechados.
+            if (!listaJogos.isEmpty()) {
+                if (JogosExtractor.InserirBanco(listaJogos)) {
+                    totalInseridos += listaJogos.size();
+                    listaJogos.clear();
+                } else {
+                    System.out.println("O ultimo lote nao foi salvo. A lista foi mantida.");
+                    return;
+                }
+            }
+
+            System.out.println("Importacao concluida. Total de jogos inseridos: " + totalInseridos);
 
         } catch (IOException e) {
             System.out.println("Erro ao ler o arquivo Excel: " + e.getMessage());
