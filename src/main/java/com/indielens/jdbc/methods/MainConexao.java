@@ -18,8 +18,6 @@ public class MainConexao {
 
 		// Imprime todas as linhas no terminal
 		perfis.forEach(linha -> System.out.println(linha));
-		
-		
 	}
 
 }

@@ -1,9 +1,7 @@
 package com.indielens.jdbc;
 
 import javax.sql.DataSource;
-
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class Conexao {
