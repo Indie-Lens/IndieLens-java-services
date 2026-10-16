@@ -11,6 +11,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -24,6 +25,11 @@ public class CsvToXlsxConverterFinal {
         String arquivoCSV = env.get("CSV_PATH");
         String arquivoXLSX = env.get("XLSX_PATH");
         int totalLinhas = 0;
+
+        if (arquivoCSV == null || arquivoCSV.trim().isEmpty() || !new File(arquivoCSV).isFile()) {
+            System.err.println("CSV_PATH deve apontar para um arquivo CSV existente, incluindo o nome e a extensao .csv.");
+            return;
+        }
         
         try (SXSSFWorkbook workbook = new SXSSFWorkbook(100)) {
         	
