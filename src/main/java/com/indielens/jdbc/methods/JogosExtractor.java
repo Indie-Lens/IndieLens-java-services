@@ -9,15 +9,23 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 import com.indielens.jdbc.Conexao;
 import com.indielens.jdbc.tables.Jogo;
+import com.indielens.logMachine.FileWritter;
 
 public class JogosExtractor {
 
     public static boolean InserirBanco(List<Jogo> lista) {
+        return InserirBanco(lista, new Conexao());
+    }
+
+    public static boolean InserirBanco(List<Jogo> lista, Conexao conexao) {
+        return InserirBanco(lista, conexao, null);
+    }
+
+    public static boolean InserirBanco(List<Jogo> lista, Conexao conexao, FileWritter log) {
         if (lista == null || lista.isEmpty() || lista.size() > 100) {
             return false;
         }
 
-        Conexao conexao = new Conexao();
         boolean sucesso = false;
 
         try (Connection conexaoLote = conexao.getConexao().getConnection()) {
@@ -43,13 +51,28 @@ public class JogosExtractor {
                 conexaoLote.commit();
                 sucesso = true;
             } catch (SQLException | RuntimeException e) {
-                conexaoLote.rollback();
-                System.out.println("Erro ao inserir o lote de jogos: " + e.getMessage());
+                try {
+                    conexaoLote.rollback();
+                    registrarErro(log, "Rollback do batch concluído. Causa: " + e.getMessage());
+                } catch (SQLException falhaRollback) {
+                    e.addSuppressed(falhaRollback);
+                    registrarErro(log, "Falha no rollback: " + falhaRollback.getMessage()
+                        + ". Causa original: " + e.getMessage());
+                }
             }
-        } catch (SQLException e) {
-            System.out.println("Erro na conexao do lote de jogos: " + e.getMessage());
+        } catch (SQLException | RuntimeException e) {
+            registrarErro(log, "Erro na conexão do batch: " + e.getMessage());
+            return false;
         }
 
         return sucesso;
+    }
+
+    private static void registrarErro(FileWritter log, String texto) {
+        if (log == null) {
+            System.err.println(FileWritter.formatarRegistro(4, texto, false));
+        } else {
+            log.CriarRegistro(4, texto, false);
+        }
     }
 }
