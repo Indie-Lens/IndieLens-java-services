@@ -16,6 +16,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import com.github.pjfanning.xlsx.SharedStringsImplementationType;
 import com.github.pjfanning.xlsx.StreamingReader;
 import com.indielens.jdbc.methods.JogosExtractor;
+import com.indielens.jdbc.Conexao;
 import com.indielens.jdbc.tables.Jogo;
 import com.indielens.jdbc.tables.Jogo_auxiliar;
 import com.indielens.jdbc.tables.Jogo_detalhes;
@@ -24,20 +25,32 @@ import com.indielens.jdbc.tables.Jogo_metricas;
 import com.indielens.jdbc.tables.Jogo_midia;
 import com.indielens.jdbc.tables.Jogo_playtime;
 import com.indielens.jdbc.tables.Jogo_suporte;
+import com.indielens.logMachine.FileWritter;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class Reader {
 	
-	Dotenv env = Dotenv.load();
-	String nomeArquivo = env.get("XLSX_PATH");
-	
-	RegisterReader lerRegistoAtual = new RegisterReader();
-	List<Jogo> listaJogos = new ArrayList<Jogo>();
-	
 	public void lerArquivoExcel(String caminhoDoArquivo) {
         String caminho = caminhoDoArquivo == null || caminhoDoArquivo.trim().isEmpty()
-            ? nomeArquivo : caminhoDoArquivo;
+            ? Dotenv.load().get("XLSX_PATH") : caminhoDoArquivo;
+        Conexao conexao = new Conexao();
+        int idRegistro = new RegisterReader(conexao).getRegistro() + 1;
+        FileWritter log = new FileWritter(idRegistro);
+        try {
+            lerArquivoExcel(caminho, idRegistro, log, conexao);
+        } catch (IOException | RuntimeException e) {
+            log.CriarRegistro(3, "Importação interrompida: " + e.getMessage(), false);
+            throw new IllegalStateException("Falha na importação do XLSX", e);
+        }
+    }
+
+    public int lerArquivoExcel(String caminho, int idRegistro, FileWritter log,
+            Conexao conexao) throws IOException {
+        List<Jogo> listaJogos = new ArrayList<>();
+        int totalInseridos = 0;
+        int linhaAtual = 0;
+        log.CriarRegistro(3, "Iniciando leitura do XLSX. ID do registro: " + idRegistro, true);
         try (
             // Mantem somente 100 linhas em memoria e usa disco para os textos compartilhados.
             Workbook workbook = StreamingReader.builder()
@@ -47,16 +60,14 @@ public class Reader {
         ) {
             Sheet aba = workbook.getSheetAt(0);
 
-            int id_registro = lerRegistoAtual.getRegistro() + 1;
-            int totalInseridos = 0;
-
-            System.out.println("Importacao com id_registro = " + id_registro);
+            int id_registro = idRegistro;
             
             for (Row linha : aba) {
             	
                 if (linha.getRowNum() == 0) {
                     continue;
                 }
+                linhaAtual = linha.getRowNum() + 1;
 
                 // O conversor CSV -> XLSX grava todas as células como texto.
                 Integer id_jogo = lerInteiro(linha, 0);
@@ -128,33 +139,40 @@ public class Reader {
                 listaJogos.add(jogoAtual);
                 
                 if (listaJogos.size() == 100) {
-                    if (JogosExtractor.InserirBanco(listaJogos)) {
-                        totalInseridos += listaJogos.size();
-                        listaJogos.clear();
-                        System.out.println("Commit concluido. Jogos inseridos: " + totalInseridos);
-                    } else {
-                        System.out.println("Leitura interrompida: o lote nao foi salvo. A lista foi mantida.");
-                        return;
-                    }
+                    log.CriarRegistro(3, "lista de jogos completa, iniciando insersão no banco", true);
+                    totalInseridos = inserirBatch(listaJogos, totalInseridos, log, conexao);
                 }
             }
 
             // Grava os jogos restantes quando o arquivo termina antes de ter 100 ultimos fechados.
             if (!listaJogos.isEmpty()) {
-                if (JogosExtractor.InserirBanco(listaJogos)) {
-                    totalInseridos += listaJogos.size();
-                    listaJogos.clear();
-                } else {
-                    System.out.println("O ultimo lote nao foi salvo. A lista foi mantida.");
-                    return;
-                }
+                totalInseridos = inserirBatch(listaJogos, totalInseridos, log, conexao);
             }
 
-            System.out.println("Importacao concluida. Total de jogos inseridos: " + totalInseridos);
-
-        } catch (IOException e) {
-            System.out.println("Erro ao ler o arquivo Excel: " + e.getMessage());
+        } catch (IOException | RuntimeException e) {
+            log.CriarRegistro(3, "Leitura/importação interrompida na linha " + linhaAtual
+                + "; dados inseridos : " + totalInseridos + ". " + e.getMessage(), false);
+            throw e;
         }
+        log.CriarRegistro(3, "Leitura do XLSX concluída. Dados inseridos : " + totalInseridos, true);
+        return totalInseridos;
+    }
+
+    private static int inserirBatch(List<Jogo> listaJogos, int totalInseridos, FileWritter log,
+            Conexao conexao) {
+        int tamanhoBatch = listaJogos.size();
+        log.CriarRegistro(4, "Inserindo batch de " + tamanhoBatch
+            + ", dados inseridos : " + totalInseridos, true);
+        if (!JogosExtractor.InserirBanco(listaJogos, conexao, log)) {
+            log.CriarRegistro(4, "Falha na inserção do batch de " + tamanhoBatch
+                + ", dados inseridos : " + totalInseridos, false);
+            throw new IllegalStateException("O batch não foi salvo; os batches anteriores permanecem confirmados.");
+        }
+        totalInseridos += tamanhoBatch;
+        listaJogos.clear();
+        log.CriarRegistro(4, "Commit concluído. Batch de " + tamanhoBatch
+            + ", dados inseridos : " + totalInseridos, true);
+        return totalInseridos;
     }
 
     private static String lerTexto(Row linha, int coluna) {
