@@ -20,7 +20,7 @@ public class Conexao {
 		
 		driver.setUsername(env.get("DB_USER"));
 		driver.setPassword(env.get("DB_SENHA"));
-		driver.setUrl("jdbc:mysql://" + env.get("DB_HOST") + ":" + env.get("DB_PORT") + "/" + env.get("DB_NAME") + "?useSSL=false&serverTimezone=UTC");
+		driver.setUrl("jdbc:mysql://" + env.get("DB_HOST") + ":" + env.get("DB_PORT") + "/" + env.get("DB_NAME") + "?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC");
 		driver.setDriverClassName("com.mysql.cj.jdbc.Driver");
 		
 		this.conexao = driver;
