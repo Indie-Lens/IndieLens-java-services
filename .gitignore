@@ -1,8 +1,6 @@
 /target
-
-src/main/java/com/indielens/excelConverter
-src/main/java/com/indielens/jdbc
-src/main/java/com/indielens/logMachine
-src/main/java/com/indielens/s3
-
+/resources/
 /.settings
+
+.env
+.classpath
