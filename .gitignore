@@ -3,4 +3,6 @@
 /.settings
 
 .env
-.classpath
+*.class
+/target/
+/resources/
