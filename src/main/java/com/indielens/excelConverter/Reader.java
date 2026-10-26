@@ -2,6 +2,8 @@ package com.indielens.excelConverter;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -12,6 +14,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 import com.github.pjfanning.xlsx.SharedStringsImplementationType;
 import com.github.pjfanning.xlsx.StreamingReader;
@@ -52,12 +55,15 @@ public class Reader {
         int linhaAtual = 0;
         log.CriarRegistro(3, "Iniciando leitura do XLSX. ID do registro: " + idRegistro, true);
         try (
+            Connection conexaoFisica = conexao.getConexao().getConnection();
             // Mantem somente 100 linhas em memoria e usa disco para os textos compartilhados.
             Workbook workbook = StreamingReader.builder()
                 .rowCacheSize(100)
                 .setSharedStringsImplementationType(SharedStringsImplementationType.TEMP_FILE_BACKED)
                 .open(new File(caminho))
         ) {
+            // Os lotes reutilizam a conexao; somente este try fecha a conexao fisica.
+            Conexao conexaoImportacao = new Conexao(new SingleConnectionDataSource(conexaoFisica, true));
             Sheet aba = workbook.getSheetAt(0);
 
             int id_registro = idRegistro;
@@ -140,15 +146,19 @@ public class Reader {
                 
                 if (listaJogos.size() == 1000) {
                     log.CriarRegistro(3, "lista de jogos completa, iniciando insersão no banco", true);
-                    totalInseridos = inserirBatch(listaJogos, totalInseridos, log, conexao);
+                    totalInseridos = inserirBatch(listaJogos, totalInseridos, log, conexaoImportacao);
                 }
             }
 
             // Grava os jogos restantes quando o arquivo termina antes de ter 100 ultimos fechados.
             if (!listaJogos.isEmpty()) {
-                totalInseridos = inserirBatch(listaJogos, totalInseridos, log, conexao);
+                totalInseridos = inserirBatch(listaJogos, totalInseridos, log, conexaoImportacao);
             }
 
+        } catch (SQLException e) {
+            log.CriarRegistro(3, "Falha na conexão da importação na linha " + linhaAtual
+                + "; dados inseridos : " + totalInseridos + ". " + e.getMessage(), false);
+            throw new IOException("Falha na conexão da importação", e);
         } catch (IOException | RuntimeException e) {
             log.CriarRegistro(3, "Leitura/importação interrompida na linha " + linhaAtual
                 + "; dados inseridos : " + totalInseridos + ". " + e.getMessage(), false);
