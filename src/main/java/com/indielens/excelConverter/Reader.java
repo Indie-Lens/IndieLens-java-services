@@ -138,7 +138,7 @@ public class Reader {
                 //adicionando na lista
                 listaJogos.add(jogoAtual);
                 
-                if (listaJogos.size() == 100) {
+                if (listaJogos.size() == 1000) {
                     log.CriarRegistro(3, "lista de jogos completa, iniciando insersão no banco", true);
                     totalInseridos = inserirBatch(listaJogos, totalInseridos, log, conexao);
                 }

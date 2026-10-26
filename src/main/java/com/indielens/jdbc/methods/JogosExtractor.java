@@ -22,7 +22,7 @@ public class JogosExtractor {
     }
 
     public static boolean InserirBanco(List<Jogo> lista, Conexao conexao, FileWritter log) {
-        if (lista == null || lista.isEmpty() || lista.size() > 100) {
+        if (lista == null || lista.isEmpty() || lista.size() > 1000) {
             return false;
         }
 
