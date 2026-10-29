@@ -17,7 +17,7 @@ public class RegisterReader {
 	}
 	
 	public Integer getRegistro() {
-		String comandoSql = "SELECT COALESCE(MAX(id_registro), 0) FROM registro";
+		String comandoSql = "SELECT COALESCE(MAX(id_registro), 0) FROM IndieLensBak";
 		return template.queryForObject(comandoSql, Integer.class);
 	}
 
