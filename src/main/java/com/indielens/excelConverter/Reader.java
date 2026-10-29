@@ -21,13 +21,6 @@ import com.github.pjfanning.xlsx.StreamingReader;
 import com.indielens.jdbc.methods.JogosExtractor;
 import com.indielens.jdbc.Conexao;
 import com.indielens.jdbc.tables.Jogo;
-import com.indielens.jdbc.tables.Jogo_auxiliar;
-import com.indielens.jdbc.tables.Jogo_detalhes;
-import com.indielens.jdbc.tables.Jogo_main;
-import com.indielens.jdbc.tables.Jogo_metricas;
-import com.indielens.jdbc.tables.Jogo_midia;
-import com.indielens.jdbc.tables.Jogo_playtime;
-import com.indielens.jdbc.tables.Jogo_suporte;
 import com.indielens.logMachine.FileWritter;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -129,22 +122,54 @@ public class Reader {
                 
                 Double preco = lerDecimal(linha, 6);
 
-                // criando objetos 
-                Jogo_main jogoAtualMain = new Jogo_main("default", id_jogo, id_registro, nome, desenvolvedor, idade_minima, proprietarios_estimados, preco, data_lancamento);
-                Jogo_auxiliar jogoAtualAuxiliar = new Jogo_auxiliar(id_jogo, id_registro, desconto_pct, site_oficial, email_suporte, url_metacritic, url_suporte, usuario_review);
-                Jogo_detalhes jogoAtualDetalhes = new Jogo_detalhes(id_jogo, id_registro, jogo_anotacoes, publicante, descricao, tags, generos, categorias);
-                Jogo_metricas jogoAtualMetricas = new Jogo_metricas(id_jogo, id_registro, peak_CCU, avaliacoes_positivas, avaliacoes_negativas, qtd_dlc, qtd_recomendacoes, qtd_conquistas, nota_metacritic, nota_usuarios, nota_score);
-                Jogo_suporte jogoAtualSuporte = new Jogo_suporte(id_jogo, id_registro, suporte_windows, suporte_MAC, suporte_linux, idiomas_suportados, idiomas_suportados_audio);
-                Jogo_midia jogoAtualMidia = new Jogo_midia(id_jogo, id_registro, imagem_cabecalho, capturas_tela_URL, videos_URL);
-                Jogo_playtime jogoAtualPlaytime = new Jogo_playtime(id_jogo, id_registro, media_horas_total, media_horas_duas_semanas, mediana_horas_total, mediana_horas_duas_semanas);
+                Jogo jogoAtual = new Jogo(
+                    id_jogo,
+                    id_registro,
+                    nome,
+                    data_lancamento,
+                    proprietarios_estimados,
+                    peak_CCU,
+                    idade_minima,
+                    preco,
+                    desconto_pct,
+                    qtd_dlc,
+                    descricao,
+                    idiomas_suportados,
+                    idiomas_suportados_audio,
+                    usuario_review,
+                    imagem_cabecalho,
+                    site_oficial,
+                    url_suporte,
+                    email_suporte,
+                    suporte_windows,
+                    suporte_MAC,
+                    suporte_linux,
+                    nota_metacritic,
+                    url_metacritic,
+                    nota_usuarios,
+                    avaliacoes_positivas,
+                    avaliacoes_negativas,
+                    nota_score,
+                    qtd_conquistas,
+                    qtd_recomendacoes,
+                    jogo_anotacoes,
+                    media_horas_total,
+                    media_horas_duas_semanas,
+                    mediana_horas_total,
+                    mediana_horas_duas_semanas,
+                    desenvolvedor,
+                    publicante,
+                    categorias,
+                    generos,
+                    tags,
+                    capturas_tela_URL,
+                    videos_URL
+                );
 
-                // centralizando Objetos nem um unico objeto para facilitar commits
-                Jogo jogoAtual = new Jogo(jogoAtualMain, jogoAtualMidia, jogoAtualSuporte,jogoAtualDetalhes, jogoAtualMetricas, jogoAtualPlaytime, jogoAtualAuxiliar);
-                
                 //adicionando na lista
                 listaJogos.add(jogoAtual);
                 
-                if (listaJogos.size() == 1000) {
+                if (listaJogos.size() == JogosExtractor.MAXIMO_LOTE) {
                     log.CriarRegistro(3, "lista de jogos completa, iniciando insersão no banco", true);
                     totalInseridos = inserirBatch(listaJogos, totalInseridos, log, conexaoImportacao);
                 }
