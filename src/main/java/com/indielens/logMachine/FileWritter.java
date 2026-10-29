@@ -43,6 +43,10 @@ public class FileWritter {
             + "-" + UUID.randomUUID() + ".txt");
     }
 
+    public Path getCaminho() {
+        return Path.of(nomeArquivo);
+    }
+
     public void definirRegistro(int idRegistro) throws IOException {
         Path origem = Path.of(nomeArquivo);
         Path destino = origem.resolveSibling(criarNomeArquivo(idRegistro));
