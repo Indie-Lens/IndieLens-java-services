@@ -6,3 +6,6 @@
 *.class
 /target/
 /resources/
+/output/
+/bin/
+/tmp/
