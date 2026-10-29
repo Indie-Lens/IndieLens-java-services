@@ -12,6 +12,7 @@ import com.indielens.jdbc.tables.Jogo;
 import com.indielens.logMachine.FileWritter;
 
 public class JogosExtractor {
+    public static final int MAXIMO_LOTE = 1000;
 
     public static boolean InserirBanco(List<Jogo> lista) {
         return InserirBanco(lista, new Conexao());
@@ -22,7 +23,7 @@ public class JogosExtractor {
     }
 
     public static boolean InserirBanco(List<Jogo> lista, Conexao conexao, FileWritter log) {
-        if (lista == null || lista.isEmpty() || lista.size() > 1000) {
+        if (lista == null || lista.isEmpty() || lista.size() > MAXIMO_LOTE) {
             return false;
         }
 
@@ -31,22 +32,12 @@ public class JogosExtractor {
         try (Connection conexaoLote = conexao.getConexao().getConnection()) {
             conexaoLote.setAutoCommit(false);
 
-            // Todos os inserts usam a mesma conexao ate o commit do lote.
+            // O lote é inserido em um único comando e confirmado na mesma conexão.
             JdbcTemplate template = new JdbcTemplate(new SingleConnectionDataSource(conexaoLote, true));
             JogosInserter inserter = new JogosInserter(template);
 
             try {
-                inserter.inserirRegistro(lista.get(0).getMain());
-
-                for (Jogo jogo : lista) {
-                    inserter.inserirMain(jogo.getMain());
-                    inserter.inserirMidia(jogo.getMidia());
-                    inserter.inserirSuporte(jogo.getSuporte());
-                    inserter.inserirDetalhes(jogo.getDetalhes());
-                    inserter.inserirMetricas(jogo.getMetricas());
-                    inserter.inserirPlaytime(jogo.getPlaytime());
-                    inserter.inserirAuxiliar(jogo.getAuxiliar());
-                }
+                inserter.inserir(lista);
 
                 conexaoLote.commit();
                 sucesso = true;
