@@ -1,40 +1,47 @@
 package com.indielens.jdbc.tables;
 
-public class Jogo {
-	
-	private Jogo_main main;
-	private Jogo_midia midia;
-	private Jogo_suporte suporte;
-	private Jogo_detalhes detalhes;
-	private Jogo_metricas metricas;
-	private Jogo_playtime playtime;
-	private Jogo_auxiliar auxiliar;
-	
-	public Jogo(Jogo_main main, Jogo_midia midia, Jogo_suporte suporte, Jogo_detalhes detalhes,
-			Jogo_metricas metricas, Jogo_playtime playtime, Jogo_auxiliar auxiliar) {
-		this.main = main;
-		this.midia = midia;
-		this.suporte = suporte;
-		this.detalhes = detalhes;
-		this.metricas = metricas;
-		this.playtime = playtime;
-		this.auxiliar = auxiliar;
-	}
-	
-	public Jogo_main getMain() { return main; }
-	public Jogo_midia getMidia() { return midia; }
-	public Jogo_suporte getSuporte() { return suporte; }
-	public Jogo_detalhes getDetalhes() { return detalhes; }
-	public Jogo_metricas getMetricas() { return metricas; }
-	public Jogo_playtime getPlaytime() { return playtime; }
-	public Jogo_auxiliar getAuxiliar() { return auxiliar; }
+import java.time.LocalDate;
 
-	public void setMain(Jogo_main main) { this.main = main; }
-	public void setMidia(Jogo_midia midia) { this.midia = midia; }
-	public void setSuporte(Jogo_suporte suporte) { this.suporte = suporte; }
-	public void setDetalhes(Jogo_detalhes detalhes) { this.detalhes = detalhes; }
-	public void setMetricas(Jogo_metricas metricas) { this.metricas = metricas; }
-	public void setPlaytime(Jogo_playtime playtime) { this.playtime = playtime; }
-	public void setAuxiliar(Jogo_auxiliar auxiliar) { this.auxiliar = auxiliar; }
-
-}
+public record Jogo(
+    Integer id_jogo,
+    Integer id_registro,
+    String nome,
+    LocalDate data_lancamento,
+    Integer proprietarios_estimados,
+    Integer peak_CCU,
+    Integer idade_minima,
+    Double preco,
+    Integer desconto_pct,
+    Integer qtd_dlc,
+    String descricao,
+    String idiomas_suportados,
+    String idiomas_suportados_audio,
+    String usuario_review,
+    String imagem_cabecalho,
+    String site_oficial,
+    String url_suporte,
+    String email_suporte,
+    Boolean suporte_windows,
+    Boolean suporte_MAC,
+    Boolean suporte_linux,
+    Integer nota_metacritic,
+    String url_metacritic,
+    Double nota_usuarios,
+    Integer avaliacoes_positivas,
+    Integer avaliacoes_negativas,
+    Integer nota_score,
+    Integer qtd_conquistas,
+    Integer qtd_recomendacoes,
+    String jogo_anotacoes,
+    Integer media_horas_total,
+    Integer media_horas_duas_semanas,
+    Integer mediana_horas_total,
+    Integer mediana_horas_duas_semanas,
+    String desenvolvedor,
+    String publicante,
+    String categorias,
+    String generos,
+    String tags,
+    String capturas_tela_URL,
+    String videos_URL
+) {}
