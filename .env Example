@@ -10,4 +10,6 @@ DB_USER="Usuario com acesso ao banco de dados"
 DB_SENHA="Senha do banco de dados"
 
 # Bucket S3
-AWS_REGION="INSIRA-REGIAO-AWS-S3"
+AWS_REGION="Insira a região do seu S3"
+S3_BUCKET="Insira seu bucket"
+S3_XLSX_PREFIX="Insira a pasta do bucket qual o excel será exportado"
