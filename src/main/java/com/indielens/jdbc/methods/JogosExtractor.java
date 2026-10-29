@@ -38,14 +38,21 @@ public class JogosExtractor {
             try {
                 inserter.inserirRegistro(lista.get(0).getMain());
 
-                for (Jogo jogo : lista) {
-                    inserter.inserirMain(jogo.getMain());
-                    inserter.inserirMidia(jogo.getMidia());
-                    inserter.inserirSuporte(jogo.getSuporte());
-                    inserter.inserirDetalhes(jogo.getDetalhes());
-                    inserter.inserirMetricas(jogo.getMetricas());
-                    inserter.inserirPlaytime(jogo.getPlaytime());
-                    inserter.inserirAuxiliar(jogo.getAuxiliar());
+                // Cada comando recebe ate 100 jogos; o commit continua sendo do lote inteiro.
+                for (int inicio = 0; inicio < lista.size(); inicio += JogosInserter.MAXIMO_JOGOS_POR_INSERT) {
+                    int tamanhoGrupo = Math.min(JogosInserter.MAXIMO_JOGOS_POR_INSERT, lista.size() - inicio);
+                    Jogo[] grupo = new Jogo[tamanhoGrupo];
+                    for (int indice = 0; indice < tamanhoGrupo; indice++) {
+                        grupo[indice] = lista.get(inicio + indice);
+                    }
+
+                    inserter.inserirMain(grupo);
+                    inserter.inserirMidia(grupo);
+                    inserter.inserirSuporte(grupo);
+                    inserter.inserirDetalhes(grupo);
+                    inserter.inserirMetricas(grupo);
+                    inserter.inserirPlaytime(grupo);
+                    inserter.inserirAuxiliar(grupo);
                 }
 
                 conexaoLote.commit();

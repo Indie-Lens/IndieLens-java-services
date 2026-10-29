@@ -43,6 +43,7 @@ public class CsvToXlsxConverterFinal {
             throw new IOException("O destino XLSX deve ser diferente do arquivo CSV de entrada.");
         }
         
+        long inicioConversao = System.nanoTime();
         try (SXSSFWorkbook workbook = new SXSSFWorkbook(100)) {
         	
             try (CSVReader leitorCSV = new CSVReaderBuilder(new InputStreamReader(new FileInputStream(arquivoCSV),StandardCharsets.UTF_8)).withCSVParser(new RFC4180Parser()).build()) {
@@ -92,7 +93,8 @@ public class CsvToXlsxConverterFinal {
             }
 
         }
-        registrar(log, "Conversão concluída. Total de linhas: " + totalLinhas, true);
+        registrar(log, "Conversão concluída. Total de linhas: " + totalLinhas
+            + "; tempo: " + (System.nanoTime() - inicioConversao) / 1_000_000 + " ms.", true);
         return totalLinhas;
     }
 

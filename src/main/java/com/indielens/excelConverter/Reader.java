@@ -9,15 +9,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
-import com.github.pjfanning.xlsx.SharedStringsImplementationType;
-import com.github.pjfanning.xlsx.StreamingReader;
 import com.indielens.jdbc.methods.JogosExtractor;
 import com.indielens.jdbc.Conexao;
 import com.indielens.jdbc.tables.Jogo;
@@ -33,6 +28,9 @@ import com.indielens.logMachine.FileWritter;
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class Reader {
+
+    private static final DateTimeFormatter FORMATO_DATA = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH);
+    private static final Pattern SUFIXO_DECIMAL_ZERO = Pattern.compile("\\.0+$");
 	
 	public void lerArquivoExcel(String caminhoDoArquivo) {
         String caminho = caminhoDoArquivo == null || caminhoDoArquivo.trim().isEmpty()
@@ -48,41 +46,33 @@ public class Reader {
         }
     }
 
-    public int lerArquivoExcel(String caminho, int idRegistro, FileWritter log,
-            Conexao conexao) throws IOException {
+    public int lerArquivoExcel(String caminho, int idRegistro, FileWritter log,Conexao conexao) throws IOException {
         List<Jogo> listaJogos = new ArrayList<>();
-        int totalInseridos = 0;
-        int linhaAtual = 0;
+        Progresso progresso = new Progresso();
+        long inicioLeitura = System.nanoTime();
         log.CriarRegistro(3, "Iniciando leitura do XLSX. ID do registro: " + idRegistro, true);
-        try (
-            Connection conexaoFisica = conexao.getConexao().getConnection();
-            // Mantem somente 100 linhas em memoria e usa disco para os textos compartilhados.
-            Workbook workbook = StreamingReader.builder()
-                .rowCacheSize(100)
-                .setSharedStringsImplementationType(SharedStringsImplementationType.TEMP_FILE_BACKED)
-                .open(new File(caminho))
-        ) {
+        try (Connection conexaoFisica = conexao.getConexao().getConnection()) {
             // Os lotes reutilizam a conexao; somente este try fecha a conexao fisica.
             Conexao conexaoImportacao = new Conexao(new SingleConnectionDataSource(conexaoFisica, true));
-            Sheet aba = workbook.getSheetAt(0);
-
             int id_registro = idRegistro;
             
-            for (Row linha : aba) {
-            	
-                if (linha.getRowNum() == 0) {
-                    continue;
+            SaxXlsxReader.ler(new File(caminho), (numeroLinha, linha) -> {
+                if (numeroLinha == 0) {
+                    return;
                 }
-                linhaAtual = linha.getRowNum() + 1;
+                progresso.linhaAtual = numeroLinha + 1;
 
                 // O conversor CSV -> XLSX grava todas as células como texto.
+                Boolean suporte_windows = lerBooleano(linha, 17, numeroLinha);
+                Boolean suporte_MAC = lerBooleano(linha, 18, numeroLinha);
+                Boolean suporte_linux = lerBooleano(linha, 19, numeroLinha);
+
                 Integer id_jogo = lerInteiro(linha, 0);
                 Integer peak_CCU = lerInteiro(linha, 4);
                 Integer idade_minima = lerInteiro(linha, 5);
                 Integer desconto_pct = lerInteiro(linha, 7);
                 Integer qtd_dlc = lerInteiro(linha, 8);
                 Integer nota_metacritic = lerInteiro(linha, 20);
-                Double nota_usuarios = lerDecimal(linha, 22);
                 Integer avaliacoes_positivas = lerInteiro(linha, 23);
                 Integer avaliacoes_negativas = lerInteiro(linha, 24);
                 Integer nota_score = lerInteiro(linha, 25);
@@ -92,6 +82,7 @@ public class Reader {
                 Integer media_horas_duas_semanas = lerInteiro(linha, 30);
                 Integer mediana_horas_total = lerInteiro(linha, 31);
                 Integer mediana_horas_duas_semanas = lerInteiro(linha, 32);
+                Double nota_usuarios = lerDecimal(linha, 22);
                 
                 String nome = lerTexto(linha, 1);
                 String descricao = lerTexto(linha, 9);
@@ -102,9 +93,6 @@ public class Reader {
                 String site_oficial = lerTexto(linha, 14);
                 String url_suporte = lerTexto(linha, 15);
                 String email_suporte = lerTexto(linha, 16);
-                Boolean suporte_windows = lerBooleano(linha, 17);
-                Boolean suporte_MAC = lerBooleano(linha, 18);
-                Boolean suporte_linux = lerBooleano(linha, 19);
                 String url_metacritic = lerTexto(linha, 21);
                 String jogo_anotacoes = lerTexto(linha, 28);
                 String desenvolvedor = lerTexto(linha, 33);
@@ -124,8 +112,7 @@ public class Reader {
                 
                 //formatando a data só pelo amor ao esporte, dava pra salvar como string
                 String dataLancamento = lerTexto(linha, 2).trim();
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH);
-                LocalDate data_lancamento = LocalDate.parse(dataLancamento, formatter);
+                LocalDate data_lancamento = LocalDate.parse(dataLancamento, FORMATO_DATA);
                 
                 Double preco = lerDecimal(linha, 6);
 
@@ -146,38 +133,50 @@ public class Reader {
                 
                 if (listaJogos.size() == 1000) {
                     log.CriarRegistro(3, "lista de jogos completa, iniciando insersão no banco", true);
-                    totalInseridos = inserirBatch(listaJogos, totalInseridos, log, conexaoImportacao);
+                    inserirBatchMedido(listaJogos, progresso, log, conexaoImportacao);
                 }
-            }
+            });
 
             // Grava os jogos restantes quando o arquivo termina antes de ter 100 ultimos fechados.
             if (!listaJogos.isEmpty()) {
-                totalInseridos = inserirBatch(listaJogos, totalInseridos, log, conexaoImportacao);
+                inserirBatchMedido(listaJogos, progresso, log, conexaoImportacao);
             }
 
         } catch (SQLException e) {
-            log.CriarRegistro(3, "Falha na conexão da importação na linha " + linhaAtual
-                + "; dados inseridos : " + totalInseridos + ". " + e.getMessage(), false);
+            log.CriarRegistro(3, "Falha na conexão da importação na linha " + progresso.linhaAtual
+                + "; dados inseridos : " + progresso.totalInseridos + ". " + e.getMessage(), false);
             throw new IOException("Falha na conexão da importação", e);
         } catch (IOException | RuntimeException e) {
-            log.CriarRegistro(3, "Leitura/importação interrompida na linha " + linhaAtual
-                + "; dados inseridos : " + totalInseridos + ". " + e.getMessage(), false);
+            log.CriarRegistro(3, "Leitura/importação interrompida na linha " + progresso.linhaAtual
+                + "; dados inseridos : " + progresso.totalInseridos + ". " + e.getMessage(), false);
             throw e;
         }
-        log.CriarRegistro(3, "Leitura do XLSX concluída. Dados inseridos : " + totalInseridos, true);
-        return totalInseridos;
+        log.CriarRegistro(3, "Leitura do XLSX concluída. Dados inseridos : " + progresso.totalInseridos, true);
+        long tempoTotal = System.nanoTime() - inicioLeitura;
+        log.CriarRegistro(3, "Tempo de importação: " + tempoTotal / 1_000_000
+            + " ms; inserção/commit: " + progresso.tempoInsercao / 1_000_000
+            + " ms; demais operações: " + (tempoTotal - progresso.tempoInsercao) / 1_000_000 + " ms.", true);
+        return progresso.totalInseridos;
+    }
+
+    private static void inserirBatchMedido(List<Jogo> jogos, Progresso progresso, FileWritter log,
+            Conexao conexao) {
+        long inicio = System.nanoTime();
+        try {
+            progresso.totalInseridos = inserirBatch(jogos, progresso.totalInseridos, log, conexao);
+        } finally {
+            progresso.tempoInsercao += System.nanoTime() - inicio;
+        }
     }
 
     private static int inserirBatch(List<Jogo> listaJogos, int totalInseridos, FileWritter log,
             Conexao conexao) {
         int tamanhoBatch = listaJogos.size();
-        log.CriarRegistro(4, "Inserindo batch de " + tamanhoBatch
-            + ", dados inseridos : " + totalInseridos, true);
+        log.CriarRegistro(4, "Inserindo batch de " + tamanhoBatch + ", dados inseridos : " + totalInseridos, true);
         if (!JogosExtractor.InserirBanco(listaJogos, conexao, log)) {
-            log.CriarRegistro(4, "Falha na inserção do batch de " + tamanhoBatch
-                + ", dados inseridos : " + totalInseridos, false);
+            log.CriarRegistro(4, "Falha na inserção do batch de " + tamanhoBatch + ", dados inseridos : " + totalInseridos, false);
             throw new IllegalStateException("O batch não foi salvo; os batches anteriores permanecem confirmados.");
-        }
+        }                            
         totalInseridos += tamanhoBatch;
         listaJogos.clear();
         log.CriarRegistro(4, "Commit concluído. Batch de " + tamanhoBatch
@@ -185,27 +184,25 @@ public class Reader {
         return totalInseridos;
     }
 
-    private static String lerTexto(Row linha, int coluna) {
-    	//faz o getcell, caso esteja vazio retorna "null" ← facilitará quando for pro jdbc
-        Cell celula = linha.getCell(coluna, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-        return celula == null ? "" : celula.getStringCellValue();
+    private static String lerTexto(String[] linha, int coluna) {
+        return linha[coluna];
     }
 
     //sub método para INT
-    private static Integer lerInteiro(Row linha, int coluna) {
+    private static Integer lerInteiro(String[] linha, int coluna) {
         String valor = lerTexto(linha, coluna).trim();
-        return valor.isEmpty() ? null : Integer.valueOf(valor.replaceFirst("\\.0+$", ""));
+        return valor.isEmpty() ? null : Integer.valueOf(SUFIXO_DECIMAL_ZERO.matcher(valor).replaceFirst(""));
     }
 
     //sub método para double
-    private static Double lerDecimal(Row linha, int coluna) {
+    private static Double lerDecimal(String[] linha, int coluna) {
         String valor = lerTexto(linha, coluna).trim();
         return valor.isEmpty() ? null : Double.valueOf(valor);
     }
 
 	  //sub método para Booleano
     //see aqui convertemos o tinyINT
-    private static Boolean lerBooleano(Row linha, int coluna) {
+    private static Boolean lerBooleano(String[] linha, int coluna, int numeroLinha) {
         String valor = lerTexto(linha, coluna).trim();
         if (valor.isEmpty()) {
             return null;
@@ -217,7 +214,13 @@ public class Reader {
             return false;
         }
         throw new IllegalArgumentException("Booleano inválido na linha "
-            + (linha.getRowNum() + 1) + ", coluna " + (coluna + 1) + ": " + valor);
+            + (numeroLinha + 1) + ", coluna " + (coluna + 1) + ": " + valor);
+    }
+
+    private static final class Progresso {
+        private int totalInseridos;
+        private int linhaAtual;
+        private long tempoInsercao;
     }
 
 }

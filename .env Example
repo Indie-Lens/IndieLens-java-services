@@ -10,4 +10,6 @@ DB_USER="Usuario com acesso ao banco de dados"
 DB_SENHA="Senha do banco de dados"
 
 # Bucket S3
-AWS_REGION="INSIRA-REGIAO-AWS-S3"
+AWS_REGION="INSIRA REGIÃO BANCO"
+S3_BUCKET="nome-do-bucket"
+S3_KEY="Brute/jogos.xlsx"

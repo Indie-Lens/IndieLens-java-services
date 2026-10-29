@@ -31,7 +31,8 @@ public class Main {
             CsvToXlsxConverterFinal.converter(env.get("CSV_PATH"), env.get("XLSX_PATH"), log);
 
             etapa = 3;
-            // O leitor chama a insercao a cada 100 jogos e ao terminar o lote restante.
+            
+            // O leitor chama a insercao a cada 1000 jogos e ao terminar o lote restante.
             Reader leitor = new Reader();
             int totalInseridos = leitor.lerArquivoExcel(env.get("XLSX_PATH"), idRegistro, log, conexao);
 
